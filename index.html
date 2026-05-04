@@ -106,11 +106,84 @@ nav {
 .hero-visual { flex: 1; display: flex; justify-content: center; perspective: 1000px; z-index: 2; }
 
 /* Interactive Floating CV */
-.floating-cv {
-  width: 100%; max-width: 380px; height: 480px; background: white; border-radius: 12px;
-  box-shadow: 0 30px 60px var(--shadow-color), 0 0 0 1px var(--border-light);
-  padding: 30px; display: flex; flex-direction: column; gap: 16px;
-  transform-style: preserve-3d; transition: transform 0.1s ease-out; overflow: hidden;
+/* ─── SHOWCASE 2-CV HOOK DESIGN ─── */
+.cv-showcase {
+  position: relative; width: 100%; max-width: 400px; height: 500px;
+  perspective: 1200px; display: flex; justify-content: center; align-items: center;
+  z-index: 2;
+}
+
+.glass-cv {
+  position: absolute; width: 260px; aspect-ratio: 1 / 1.414; /* Always Perfect A4 Ratio */
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 12px;
+  padding: 24px; box-sizing: border-box; overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s ease-out;
+}
+
+[data-theme="dark"] .glass-cv {
+  background: rgba(15, 23, 42, 0.6); border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Back CV Styling */
+.cv-back {
+  transform: translate(-30px, -20px) rotate(-6deg) scale(0.9); z-index: 1;
+  box-shadow: -20px 30px 60px rgba(14, 165, 233, 0.15);
+}
+
+/* Front CV Styling */
+.cv-front {
+  transform: translate(30px, 20px) rotate(4deg); z-index: 2;
+  box-shadow: 20px 40px 60px rgba(79, 70, 229, 0.25);
+}
+
+/* Skeleton Lines & Animations */
+.g-line { height: 8px; border-radius: 4px; background: #cbd5e1; }
+[data-theme="dark"] .g-line { background: #334155; }
+
+.shimmer {
+  background: linear-gradient(90deg, #cbd5e1 25%, #f1f5f9 50%, #cbd5e1 75%);
+  background-size: 200% 100%;
+  animation: shimmerAnim 2.5s infinite;
+}
+[data-theme="dark"] .shimmer {
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmerAnim { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Glowing Sweep Effect on Front CV */
+.cv-glow {
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: skewX(-20deg); animation: sweepGlow 4s infinite ease-in-out; pointer-events: none;
+}
+[data-theme="dark"] .cv-glow { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); }
+
+@keyframes sweepGlow { 0%, 20% { left: -100%; } 80%, 100% { left: 200%; } }
+
+/* ─── MOBILE RESPONSIVENESS ─── */
+@media (max-width: 1024px) {
+  .hero { flex-direction: column; text-align: center; padding-top: 100px; }
+  .hero-content { margin: 0 auto; }
+  
+  /* Show but nicely scaled down for tablets/phones */
+  .hero-visual { width: 100%; margin-top: 20px; }
+  .cv-showcase { transform: scale(0.85); margin: 0 auto; height: 380px; }
+  
+  .workspace-wrapper { flex-direction: column; height: auto; overflow: visible; }
+  .sidebar-left, .sidebar-right { width: 100%; border-right: none; border-bottom: 1px solid var(--border-light); }
+  .canvas-center { min-height: 80vh; padding: 80px 0 40px; overflow: hidden; }
+  .canvas-header-tools { top: 10px; right: 50%; transform: translateX(50%); width: max-content;}
+  .a4-wrap { margin: 0 auto; }
+}
+
+@media (max-width: 480px) {
+  .cv-showcase { transform: scale(0.65); height: 300px; }
 }
 
 /* ─── APP WORKSPACE ─── */
@@ -233,8 +306,10 @@ footer { background: var(--bg-panel); color: var(--text-muted); padding: 40px 5%
 @media (max-width: 1024px) {
   .hero { flex-direction: column; text-align: center; padding-top: 100px; }
   .hero-content { margin: 0 auto; }
-  .floating-cv { max-width: 240px; height: 260px; padding: 16px; gap: 12px; }
-  .floating-cv > div { transform: scale(0.65); transform-origin: top center; margin-bottom: 0 !important;}
+  
+  /* এই লাইনটি যুক্ত করা হয়েছে মোবাইল থেকে ইমেজ সরাতে */
+  .hero-visual { display: none !important; }
+  
   .workspace-wrapper { flex-direction: column; height: auto; overflow: visible; }
   .sidebar-left, .sidebar-right { width: 100%; border-right: none; border-bottom: 1px solid var(--border-light); }
   .canvas-center { min-height: 80vh; padding: 80px 0 40px; overflow: hidden; }
@@ -340,14 +415,61 @@ footer { background: var(--bg-panel); color: var(--text-muted); padding: 40px 5%
     <p>A beautifully designed workspace to build your CV in real-time. Experience auto-saving, smart formatting, and flawless 1-page A4 PDF downloads.</p>
     <button class="nav-btn" style="font-size: 16px; padding: 14px 32px;" onclick="document.getElementById('workspace').scrollIntoView()">Enter Workspace →</button>
   </div>
-  <div class="hero-visual">
-    <div class="floating-cv" id="floatingCard">
-      <div style="display:flex; gap:16px; border-bottom:2px solid #f1f5f9; padding-bottom:16px;">
-        <div style="width:60px; height:60px; border-radius:50%; background:var(--primary); flex-shrink:0;"></div>
-        <div style="flex:1;"><div style="height:12px; width:70%; background:#cbd5e1; border-radius:6px; margin-bottom:8px;"></div><div style="height:8px; width:40%; background:#f1f5f9; border-radius:4px;"></div></div>
+ <div class="hero-visual">
+  <div class="cv-showcase" id="cv-showcase">
+    <!-- Back Card (Editorial Style) -->
+    <div class="glass-cv cv-back" id="card-back">
+      <div class="g-head" style="border-bottom: 2px solid var(--text-dark); padding-bottom: 12px; margin-bottom: 16px;">
+        <div class="g-line" style="width: 70%; height: 16px; margin-bottom: 6px; background: var(--text-dark);"></div>
+        <div class="g-line" style="width: 40%; height: 10px; background: var(--primary);"></div>
       </div>
-      <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px; margin-top:10px;">
-        <div><div style="height:8px; background:var(--primary); width:80%; margin-bottom:12px;"></div><div style="height:6px; background:#f1f5f9; margin-bottom:8px;"></div><div style="height:6px; background:#f1f5f9; width:60%;"></div></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <div class="g-line" style="width: 80%; margin-bottom: 12px; background: var(--primary);"></div>
+          <div class="g-line shimmer" style="width: 100%; margin-bottom: 6px;"></div>
+          <div class="g-line shimmer" style="width: 90%; margin-bottom: 6px;"></div>
+          <div class="g-line shimmer" style="width: 60%;"></div>
+        </div>
+        <div>
+          <div class="g-line" style="width: 60%; margin-bottom: 12px; background: var(--text-dark);"></div>
+          <div class="g-line shimmer" style="width: 100%; margin-bottom: 6px;"></div>
+          <div class="g-line shimmer" style="width: 85%; margin-bottom: 6px;"></div>
+          <div class="g-line shimmer" style="width: 70%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Front Card (Structured Style) -->
+    <div class="glass-cv cv-front" id="card-front">
+      <div style="display:flex; gap:16px; border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:16px; margin-bottom:16px;">
+        <div style="width:50px; height:50px; border-radius:50%; background: linear-gradient(135deg, var(--primary), var(--accent)); flex-shrink:0; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);"></div>
+        <div style="flex:1; display: flex; flex-direction: column; justify-content: center;">
+          <div class="g-line" style="height:12px; width:80%; background:var(--primary); margin-bottom:8px;"></div>
+          <div class="g-line shimmer" style="height:8px; width:50%;"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:16px;">
+        <div style="width:30%; border-right:1px solid rgba(0,0,0,0.1); padding-right:12px;">
+          <div class="g-line shimmer" style="width:100%; margin-bottom:8px;"></div>
+          <div class="g-line shimmer" style="width:80%; margin-bottom:8px;"></div>
+          <div class="g-line shimmer" style="width:90%;"></div>
+        </div>
+        <div style="flex:1;">
+          <div class="g-line" style="width:50%; background:var(--text-dark); margin-bottom:12px;"></div>
+          <div class="g-line shimmer" style="width:100%; margin-bottom:8px;"></div>
+          <div class="g-line shimmer" style="width:95%; margin-bottom:8px;"></div>
+          <div class="g-line shimmer" style="width:80%; margin-bottom:16px;"></div>
+          <div class="g-line" style="width:40%; background:var(--accent); margin-bottom:12px;"></div>
+          <div class="g-line shimmer" style="width:100%; margin-bottom:8px;"></div>
+          <div class="g-line shimmer" style="width:70%;"></div>
+        </div>
+      </div>
+      <!-- Glowing Overlay -->
+      <div class="cv-glow"></div>
+    </div>
+  </div>
+</div>
+
         <div><div style="height:8px; background:#0f172a; width:50%; margin-bottom:12px;"></div><div style="height:6px; background:#f1f5f9; margin-bottom:8px;"></div><div style="height:6px; background:#f1f5f9; width:90%; margin-bottom:8px;"></div><div style="height:6px; background:#f1f5f9; width:70%;"></div></div>
       </div>
     </div>
@@ -483,12 +605,22 @@ function toggleTheme() {
 if(currentTheme==='light') document.getElementById('theme-icon').innerHTML = `<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>`;
 
 // ── HERO 3D EFFECT ──
+// ── HERO 3D DUAL-CARD EFFECT ──
 document.addEventListener('mousemove', (e) => {
-  const card = document.getElementById('floatingCard');
-  if(!card || window.innerWidth <= 1024) return; 
-  const x = (window.innerWidth / 2 - e.pageX) / 35;
-  const y = (window.innerHeight / 2 - e.pageY) / 35;
-  card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+  if (window.innerWidth <= 1024) return; // Disable complex 3D on mobile
+  
+  const xAxis = (window.innerWidth / 2 - e.pageX) / 40;
+  const yAxis = (window.innerHeight / 2 - e.pageY) / 40;
+
+  const frontCard = document.getElementById('card-front');
+  const backCard = document.getElementById('card-back');
+
+  if (frontCard && backCard) {
+    // Front card moves faster, creating a depth illusion
+    frontCard.style.transform = `translate(30px, 20px) rotate(4deg) rotateY(${-xAxis}deg) rotateX(${yAxis}deg)`;
+    // Back card moves slower and slightly opposite
+    backCard.style.transform = `translate(-30px, -20px) rotate(-6deg) scale(0.9) rotateY(${-xAxis * 0.5}deg) rotateX(${yAxis * 0.5}deg)`;
+  }
 });
 
 // ── DATA INIT & SAFE PARSE ──
@@ -718,10 +850,10 @@ function render(){
   const o = renderArea(cvData.fo, PH.fo);
   
   const rawContacts =[ 
-    cvData.fe ? `✉ ${sanitize(cvData.fe)}` : `<span class="empty-ph">✉ arafat@email.com</span>`,
-    cvData.fp ? `✆ ${sanitize(cvData.fp)}` : `<span class="empty-ph">✆ +880 1700-000000</span>`,
-    cvData.fc ? `📍 ${sanitize(cvData.fc)}` : `<span class="empty-ph">📍 Dhaka, Bangladesh</span>`,
-    cvData.fl2 ? `🔗 ${sanitize(cvData.fl2)}` : `<span class="empty-ph">🔗 linkedin.com/in/arafat</span>`
+    cvData.fe ? `✉ ${sanitize(cvData.fe)}` : `<span class="empty-ph">✉ Youremail@email.com</span>`,
+    cvData.fp ? `✆ ${sanitize(cvData.fp)}` : `<span class="empty-ph">✆ +880 1800-000000</span>`,
+    cvData.fc ? `📍 ${sanitize(cvData.fc)}` : `<span class="empty-ph">📍 Bashikpir, Lakhsmipur</span>`,
+    cvData.fl2 ? `🔗 ${sanitize(cvData.fl2)}` : `<span class="empty-ph">🔗 linkedin thakle seta de</span>`
   ];
   
   const imgStr = cvData.avatar ? `<img src="${cvData.avatar}" ` : '';
@@ -801,7 +933,7 @@ function render(){
   setTimeout(() => { fitCV(); checkOverflow(); }, 50);
 }
 
-// ── 100% BULLETPROOF PDF EXPORT (Cropping & Blank Fix) ──
+// ── 100% BULLETPROOF PDF EXPORT (1 Page Strict Limit Fix) ──
 function dlPDF(){
   const name = (document.getElementById('fn').value || 'Resume').replace(/\s+/g, '_');
   const btn = document.getElementById('dlbtn'); 
@@ -811,35 +943,33 @@ function dlPDF(){
   const wrap = document.getElementById('cv-wrap');
   const out = document.getElementById('cv-out');
   
-  // ১. বর্তমান স্কেলিং ও মার্জিন সেভ করে রাখা
+  // অরিজিনাল অবস্থা সেভ করে রাখা
   const originalTransform = wrap.style.transform;
   const originalMargin = wrap.style.margin;
   const originalMarginTop = wrap.style.marginTop;
   const originalMarginBottom = wrap.style.marginBottom;
-  const currentScrollY = window.scrollY; // ইউজারের স্ক্রল পজিশন সেভ
+  const currentScrollY = window.scrollY; 
   
-  // ২. লাইভ স্ক্রিনের স্কেলিং সরিয়ে অরজিনাল 1:1 সাইজ করা (যেন html2canvas ভুল মাপ না নেয়)
+  // এক্সপোর্টের আগে রিস্টোর করা এবং ২য় পেজ আটকাতে strict height দেওয়া
   wrap.style.transform = 'none';
   wrap.style.margin = '0';
-  out.classList.add('pdf-exporting'); // প্লেসহোল্ডার হাইড করবে
-  window.scrollTo(0, 0); // স্ক্রলিং ইস্যু রোধ করতে টপে নিয়ে যাওয়া
+  wrap.style.height = '1122px'; // 1123px থেকে 1122px করা হলো যাতে রাউন্ডিং হয়ে ২য় পেজ না আসে
+  wrap.style.overflow = 'hidden';
+  out.classList.add('pdf-exporting'); 
+  window.scrollTo(0, 0); 
 
+  // Option এ মিলিমিটারের বদলে পিক্সেল (px) ব্যবহার করা হয়েছে
   const opt = { 
     margin: 0, 
     filename: name + '.pdf', 
     image: { type: 'jpeg', quality: 1.0 }, 
-    html2canvas: { 
-      scale: 2, 
-      useCORS: true, 
-      scrollX: 0, 
-      scrollY: 0
-    }, 
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+    html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, 
+    // mm এর বদলে px ব্যবহার করা হয়েছে, যা ব্রাউজারের মাপের সাথে 1:1 ফিট হবে
+    jsPDF: { unit: 'px', format: [794, 1122], orientation: 'portrait' } 
   };
   
-  // ৩. PDF জেনারেট করা
   html2pdf().set(opt).from(wrap).save().then(() => { 
-    // ৪. ডাউনলোড শুরু হলেই আবার আগের অবস্থায় (ছোট স্কেলে) ফিরিয়ে আনা
+    // ডাউনলোড শেষে এডিটর আবার আগের অবস্থায় ফিরিয়ে আনা
     wrap.style.transform = originalTransform;
     wrap.style.margin = originalMargin;
     wrap.style.marginTop = originalMarginTop;
@@ -851,7 +981,6 @@ function dlPDF(){
     btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download PDF`; 
   }).catch(err => { 
     console.error("PDF Export Error:", err);
-    // এরর হলেও স্ক্রিন আগের অবস্থায় ফিরিয়ে আনা
     wrap.style.transform = originalTransform;
     wrap.style.margin = originalMargin;
     wrap.style.marginTop = originalMarginTop;
