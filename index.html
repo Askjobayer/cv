@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CraftCV — Intelligent Resume Builder</title>
+<!-- Modern Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- PDF Export Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+/* ─── RESET & THEME SYSTEM ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #4f46e5;
+  --accent: #0ea5e9;
+  
+  /* Light Mode (Default) */
+  --bg-main: #f8fafc;
+  --bg-panel: #ffffff;
+  --border-light: #e2e8f0;
+  --input-bg: #f1f5f9;
+  --text-dark: #0f172a;
+  --text-muted: #64748b;
+  --nav-glass: rgba(255, 255, 255, 0.85);
+  --shadow-color: rgba(0,0,0,0.08);
+  --dot-color: #cbd5e1;
+  --grid-color: rgba(15, 23, 42, 0.04);
+}
+/* Dark Mode */
+[data-theme="dark"] {
+  --bg-main: #020617;
+  --bg-panel: #0f172a;
+  --border-light: #1e293b;
+  --input-bg: #1e293b;
+  --text-dark: #f8fafc;
+  --text-muted: #cbd5e1;
+  --nav-glass: rgba(15, 23, 42, 0.85);
+  --shadow-color: rgba(0,0,0,0.6);
+  --dot-color: rgba(255, 255, 255, 0.08);
+  --grid-color: rgba(255, 255, 255, 0.03);
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-dark); overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ─── NAVBAR ─── */
+nav {
+  position: fixed; top: 0; width: 100%; z-index: 1000; height: 72px;
+  background: var(--nav-glass); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 5%;
+  transition: all 0.3s;
+}
+.logo { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; cursor: pointer; color: var(--text-dark); }
+.logo em { font-style: italic; color: var(--primary); }
+.nav-actions { display: flex; gap: 12px; align-items: center; }
+.theme-btn {
+  background: var(--input-bg); border: 1px solid var(--border-light); color: var(--text-dark);
+  width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.3s;
+}
+.theme-btn:hover { background: var(--border-light); }
+.nav-btn {
+  background: var(--primary); color: white; padding: 10px 24px; border-radius: 50px;
+  font-weight: 600; font-size: 14px; font-family: 'Plus Jakarta Sans'; cursor: pointer; border: none; transition: 0.3s;
+}
+.nav-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3); }
+
+/* ─── HERO SECTION & ANIMATION ─── */
+.hero {
+  min-height: 100vh; padding: 120px 5% 60px;
+  display: flex; align-items: center; justify-content: space-between; gap: 40px;
+  position: relative; overflow: hidden; background: var(--bg-main);
+}
+.hero-grid {
+  position: absolute; inset: -100px; z-index: 1; pointer-events: none;
+  background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridMove 15s linear infinite;
+}
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(40px, 40px); }
+}
+
+.glow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4; animation: float 10s infinite alternate ease-in-out; }
+.orb-1 { background: var(--primary); width: 400px; height: 400px; top: -50px; left: -100px; }
+.orb-2 { background: var(--accent); width: 300px; height: 300px; bottom: 0; right: 10%; animation-duration: 12s; }
+
+@keyframes float {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-60px) scale(1.1); }
+}
+
+.hero-content { max-width: 600px; z-index: 2; position: relative; }
+.hero-tag { display: inline-flex; align-items: center; padding: 6px 16px; background: rgba(79, 70, 229, 0.1); border: 1px solid rgba(79, 70, 229, 0.2); color: var(--primary); font-size: 12px; font-weight: 700; border-radius: 50px; margin-bottom: 24px; text-transform: uppercase; }
+.hero h1 { font-size: clamp(40px, 5.5vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: 20px; color: var(--text-dark); letter-spacing: -0.02em; }
+.hero p { font-size: 18px; color: var(--text-muted); line-height: 1.6; margin-bottom: 36px; }
+.hero-visual { flex: 1; display: flex; justify-content: center; perspective: 1000px; z-index: 2; }
+
+/* Interactive Floating CV */
+.floating-cv {
+  width: 100%; max-width: 380px; height: 480px; background: white; border-radius: 12px;
+  box-shadow: 0 30px 60px var(--shadow-color), 0 0 0 1px var(--border-light);
+  padding: 30px; display: flex; flex-direction: column; gap: 16px;
+  transform-style: preserve-3d; transition: transform 0.1s ease-out; overflow: hidden;
+}
+
+/* ─── APP WORKSPACE ─── */
+.workspace-wrapper {
+  height: 100vh; width: 100%; display: flex; overflow: hidden;
+  border-top: 1px solid var(--border-light); background: var(--bg-main);
+}
+
+/* LEFT SIDEBAR (EDITOR) */
+.sidebar-left {
+  width: 400px; background: var(--bg-panel); display: flex; flex-direction: column;
+  border-right: 1px solid var(--border-light); z-index: 10; flex-shrink: 0; box-shadow: 2px 0 10px var(--shadow-color);
+}
+.sidebar-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); }
+.sidebar-header h2 { font-size: 16px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 8px;}
+.form-area { flex: 1; overflow-y: auto; padding: 24px; }
+
+.ftabs { display: flex; gap: 6px; margin-bottom: 24px; background: var(--input-bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border-light); }
+.ftab {
+  flex: 1; padding: 8px 0; text-align: center; border-radius: 6px; font-size: 12px; font-weight: 700;
+  border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: 0.2s;
+}
+.ftab.on, .ftab:hover { background: var(--bg-panel); color: var(--primary); box-shadow: 0 1px 3px var(--shadow-color); }
+
+.fg { margin-bottom: 18px; }
+.fl { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
+.fi {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--border-light); border-radius: 8px;
+  font-size: 14px; background: var(--bg-main); color: var(--text-dark); font-family: 'Plus Jakarta Sans'; transition: 0.2s;
+}
+.fi::placeholder { color: #94a3b8; }
+.fi:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); background: var(--bg-panel); }
+textarea.fi { resize: vertical; min-height: 80px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Photo Upload Box */
+.photo-upload-wrapper { position: relative; margin-bottom: 18px; }
+.photo-upload {
+  width: 100%; padding: 16px; border: 2px dashed var(--border-light); border-radius: 8px;
+  display: flex; align-items: center; gap: 16px; cursor: pointer; background: var(--bg-main); transition: 0.2s;
+}
+.photo-upload:hover { border-color: var(--primary); }
+.photo-preview { width: 48px; height: 48px; border-radius: 50%; background: var(--border-light); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.photo-text { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+.photo-text span { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top:2px; }
+.del-avatar-btn {
+  position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4); transition: 0.2s; z-index: 10;
+}
+.del-avatar-btn:hover { background: #dc2626; transform: scale(1.1); }
+
+.ecard { background: var(--bg-main); border: 1px solid var(--border-light); border-radius: 8px; padding: 16px; margin-bottom: 16px; transition: 0.2s; }
+.ecard:hover { border-color: var(--primary); }
+.ecard-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.ecard-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;}
+.rmv { background: #fee2e2; color: #ef4444; border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; transition: 0.2s; font-weight: bold; display:flex; align-items:center; justify-content:center;}
+.rmv:hover { background: #fca5a5; }
+.add-btn { width: 100%; padding: 12px; border: 1px dashed var(--border-light); border-radius: 8px; background: transparent; color: var(--text-dark); cursor: pointer; font-weight: 700; transition: 0.2s; }
+.add-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(79, 70, 229, 0.05); }
+
+/* CENTER CANVAS (Real-time Preview) */
+.canvas-center {
+  flex: 1; display: flex; justify-content: center; align-items: center;
+  position: relative; overflow: hidden; background: var(--bg-main);
+  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+.canvas-header-tools { position: absolute; top: 20px; right: 20px; z-index: 50; display: flex; gap: 10px; }
+.fab-dl {
+  background: var(--text-dark); color: var(--bg-main); padding: 12px 24px; border-radius: 50px;
+  font-weight: 700; font-size: 14px; font-family: 'Plus Jakarta Sans'; border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 25px var(--shadow-color); transition: 0.3s;
+}
+.fab-dl:hover { background: var(--primary); transform: translateY(-3px); color: white;}
+
+/* Overflow Warning Banner */
+#overflow-warn {
+  display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  background: #ef4444; color: white; padding: 10px 24px; border-radius: 50px;
+  font-size: 13px; font-weight: 700; z-index: 100; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+  text-align: center; flex-direction: column; gap: 2px;
+}
+#overflow-warn span { font-size: 11px; font-weight: 500; opacity: 0.9; }
+
+/* Strict A4 Wrap for Editor Preview */
+.a4-wrap {
+  width: 794px; height: 1123px; background: white; flex-shrink: 0;
+  box-shadow: 0 25px 50px var(--shadow-color); border-radius: 2px;
+  transform-origin: top center; overflow: hidden; 
+}
+#cv-out { width: 100%; height: 100%; background: white; overflow: hidden; }
+
+/* RIGHT SIDEBAR (DESIGN STUDIO) */
+.sidebar-right {
+  width: 300px; background: var(--bg-panel); border-left: 1px solid var(--border-light);
+  display: flex; flex-direction: column; z-index: 10; flex-shrink: 0;
+}
+.design-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); }
+.design-body { flex: 1; overflow-y: auto; padding: 24px; }
+.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 14px; display: block; }
+.palettes { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+.pal { width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border-light); transition: 0.2s; box-shadow: 0 2px 5px var(--shadow-color);}
+.pal.active, .pal:hover { transform: scale(1.15); outline: 2px solid var(--primary); outline-offset: 2px; border-color: transparent; }
+
+/* Template Thumbnails */
+.tpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tcard { background: var(--bg-main); border: 2px solid var(--border-light); border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.2s; }
+.tcard:hover { border-color: var(--primary); }
+.tcard.sel { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+.tcard-thumb { height: 120px; background: var(--bg-main); padding: 8px; display: flex; justify-content: center; }
+.tcard-info { padding: 10px; font-size: 12px; font-weight: 700; color: var(--text-dark); text-align: center; border-top: 1px solid var(--border-light); background: var(--bg-panel);}
+.mini-cv { width: 100%; height: 100%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; border-radius: 2px;}
+
+/* ─── FOOTER ─── */
+footer { background: var(--bg-panel); color: var(--text-muted); padding: 40px 5%; text-align: center; border-top: 1px solid var(--border-light); }
+.f-logo { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--text-dark); margin-bottom: 8px; font-weight: 700; }
+.f-logo em { font-style: italic; color: var(--primary); }
+
+/* ─── MOBILE RESPONSIVENESS ─── */
+@media (max-width: 1024px) {
+  .hero { flex-direction: column; text-align: center; padding-top: 100px; }
+  .hero-content { margin: 0 auto; }
+  .floating-cv { max-width: 240px; height: 260px; padding: 16px; gap: 12px; }
+  .floating-cv > div { transform: scale(0.65); transform-origin: top center; margin-bottom: 0 !important;}
+  .workspace-wrapper { flex-direction: column; height: auto; overflow: visible; }
+  .sidebar-left, .sidebar-right { width: 100%; border-right: none; border-bottom: 1px solid var(--border-light); }
+  .canvas-center { min-height: 80vh; padding: 80px 0 40px; overflow: hidden; }
+  .canvas-header-tools { top: 10px; right: 50%; transform: translateX(50%); width: max-content;}
+  .a4-wrap { margin: 0 auto; }
+}
+
+/* ═══════════════════════════════════════
+   CV TEMPLATES CSS (Strict A4 Layout)
+═══════════════════════════════════════ */
+#cv-out { --c1:#0f172a; --c2:#0ea5e9; --c3:#e0f2fe; color: #1e293b; background: white; }
+#cv-out * { word-break: break-word; overflow-wrap: break-word; }
+
+/* FIX 1: Placeholder fading logic for empty fields */
+.empty-ph { opacity: 0.35; font-style: italic; }
+.pdf-exporting .empty-ph { display: none !important; }
+
+/* Reusable Components */
+.cv-irow { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 10px; }
+.cv-ititle { font-size: 15px; font-weight: 800; color: var(--c1); letter-spacing: -0.2px;}
+.cv-idate { font-size: 11px; color: var(--c1); background: var(--c3); padding: 4px 10px; border-radius: 4px; font-weight: 700; flex-shrink:0; white-space: nowrap; }
+.cv-isub { font-size: 13px; color: var(--c2); font-weight: 700; margin-top: 2px;}
+.cv-idesc { font-size: 12.5px; color: #475569; line-height: 1.6; margin-top: 6px; white-space: pre-wrap; }
+
+.t-root { width: 794px; height: 1123px; display: flex; flex-direction: column; box-sizing: border-box; } 
+
+/* BORDERED SKILL TAGS */
+.t1-tag { display: inline-block; background: white; border: 1px solid var(--c2); color: var(--c1); font-size: 11.5px; padding: 5px 12px; border-radius: 50px; margin: 4px 4px 4px 0; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
+.t2-tag { display: inline-block; background: transparent; border: 1px solid var(--c1); color: var(--c1); font-size: 11.5px; padding: 4px 10px; border-radius: 4px; margin: 4px 6px 4px 0; font-weight: 700; }
+.t3-tag { display: inline-block; background: transparent; border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 11.5px; padding: 5px 12px; border-radius: 4px; margin: 4px 4px 4px 0; font-weight: 500;}
+.t4-tag { display: inline-block; background: white; border: 1px solid var(--border-light); color: var(--c1); font-size: 11.5px; padding: 5px 12px; border-radius: 6px; margin: 4px 6px 4px 0; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+
+/* T1: Structured */
+.t1-hd { background: linear-gradient(135deg, var(--c1), #1e293b); padding: 45px 50px; color: white; display: flex; align-items: center; gap: 30px; flex-shrink: 0; position: relative;}
+.t1-hd::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:4px; background: var(--c2); }
+.t1-avatar { width: 110px; height: 110px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); object-fit: cover; background: var(--c2); flex-shrink: 0; }
+.t1-name { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 700; line-height: 1; margin-bottom: 8px;}
+.t1-role { font-size: 14px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--c3); }
+.t1-contacts { margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; font-weight: 500; opacity: 0.9; }
+.t1-body { display: grid; grid-template-columns: 270px 1fr; flex: 1; background: white;}
+.t1-side { background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 40px 30px; }
+.t1-main { padding: 40px 50px; }
+.t1-stitle { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--c1); border-bottom: 2px solid var(--c3); padding-bottom: 8px; margin-bottom: 20px; display:inline-block; width: 100%;}
+.t1-sec { margin-bottom: 30px; }
+.t1-obj { font-size: 13px; color: #475569; line-height: 1.7; white-space: pre-wrap; }
+
+/* T2: Editorial */
+.t2 { padding: 60px; background: #fff; }
+.t2-head-wrap { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--c1); padding-bottom: 25px; margin-bottom: 35px; flex-shrink: 0; position: relative;}
+.t2-head-wrap::after { content:''; position:absolute; bottom:-4px; left:0; width:60px; height:3px; background:var(--c2); }
+.t2-avatar { width: 90px; height: 90px; border-radius: 12px; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+.t2-name { font-family: 'Cormorant Garamond', serif; font-size: 54px; font-weight: 700; color: var(--c1); line-height: 0.9; letter-spacing: -1px;}
+.t2-role { font-size: 13px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c2); margin-top: 12px; }
+.t2-contacts { text-align: right; font-size: 12px; font-weight: 500; color: #475569; display: flex; flex-direction: column; gap: 6px; }
+.t2-body { display: grid; grid-template-columns: 1fr 250px; gap: 50px; flex: 1; }
+.t2-stitle { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--c1); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;}
+.t2-stitle::before { content:''; width:8px; height:8px; background:var(--c2); border-radius:50%; display:inline-block;}
+
+/* T3: Sidebar */
+.t3 { display: grid; grid-template-columns: 290px 1fr; background: white;}
+.t3-side { background: var(--c1); padding: 60px 35px; color: white; text-align: center; position: relative;}
+.t3-avatar { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.1); box-shadow: 0 0 0 4px var(--c1), 0 0 0 6px var(--c2); margin: 0 auto 25px; background: white; flex-shrink: 0;}
+.t3-name { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 700; line-height: 1.1; }
+.t3-role { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c3); margin-top: 12px; }
+.t3-contacts { margin: 35px 0; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); text-align: left; font-size: 12.5px; color: rgba(255,255,255,0.8); display: flex; flex-direction: column; gap: 12px; }
+.t3-stitle { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: white; margin-bottom: 16px; text-align: left; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 4px; border-left: 3px solid var(--c2);}
+.t3-main { padding: 60px 50px; background: white;}
+.t3-mstitle { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--c1); margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
+.t3-mstitle::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+/* T4: Modern Grid */
+.t4 { padding: 50px 60px; background: #fafafa; }
+.t4-hd { display: flex; gap: 35px; align-items: center; margin-bottom: 30px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border-light); flex-shrink: 0;}
+.t4-avatar { width: 100px; height: 100px; border-radius: 10px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-light);}
+.t4-name { font-size: 42px; font-weight: 800; color: var(--c1); line-height: 1; letter-spacing: -1px; }
+.t4-role { font-size: 14px; color: var(--c2); font-weight: 800; text-transform: uppercase; margin-top: 10px; letter-spacing: 0.5px;}
+.t4-contacts { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 500; color: #64748b; text-align: right; }
+.t4-obj { padding: 20px 25px; background: white; border-left: 4px solid var(--c2); border-radius: 0 8px 8px 0; font-size: 13.5px; color: #475569; line-height: 1.7; margin-bottom: 35px; white-space: pre-wrap; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.02);}
+.t4-body { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; flex: 1; }
+.t4-stitle { font-size: 15px; font-weight: 800; text-transform: uppercase; color: var(--c1); margin-bottom: 20px; border-bottom: 2px solid var(--c1); padding-bottom: 10px; display: inline-block;}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo" onclick="window.scrollTo(0,0)"><em>Craft</em>CV</div>
+  <div class="nav-actions">
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+      <svg id="theme-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <button class="nav-btn" onclick="document.getElementById('workspace').scrollIntoView()">Start Building</button>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<header class="hero">
+  <div class="hero-grid"></div>
+  <div class="glow-container"><div class="glow-orb orb-1"></div><div class="glow-orb orb-2"></div></div>
+  <div class="hero-content">
+    <div class="hero-tag">Smart & Clean Builder</div>
+    <h1>Professional Resumes,<br><span>Made Simple.</span></h1>
+    <p>A beautifully designed workspace to build your CV in real-time. Experience auto-saving, smart formatting, and flawless 1-page A4 PDF downloads.</p>
+    <button class="nav-btn" style="font-size: 16px; padding: 14px 32px;" onclick="document.getElementById('workspace').scrollIntoView()">Enter Workspace →</button>
+  </div>
+  <div class="hero-visual">
+    <div class="floating-cv" id="floatingCard">
+      <div style="display:flex; gap:16px; border-bottom:2px solid #f1f5f9; padding-bottom:16px;">
+        <div style="width:60px; height:60px; border-radius:50%; background:var(--primary); flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="height:12px; width:70%; background:#cbd5e1; border-radius:6px; margin-bottom:8px;"></div><div style="height:8px; width:40%; background:#f1f5f9; border-radius:4px;"></div></div>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px; margin-top:10px;">
+        <div><div style="height:8px; background:var(--primary); width:80%; margin-bottom:12px;"></div><div style="height:6px; background:#f1f5f9; margin-bottom:8px;"></div><div style="height:6px; background:#f1f5f9; width:60%;"></div></div>
+        <div><div style="height:8px; background:#0f172a; width:50%; margin-bottom:12px;"></div><div style="height:6px; background:#f1f5f9; margin-bottom:8px;"></div><div style="height:6px; background:#f1f5f9; width:90%; margin-bottom:8px;"></div><div style="height:6px; background:#f1f5f9; width:70%;"></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- APP WORKSPACE -->
+<section id="workspace" class="workspace-wrapper">
+  
+  <!-- LEFT SIDEBAR (EDITOR) -->
+  <aside class="sidebar-left">
+    <div class="sidebar-header">
+      <h2><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Data Editor</h2>
+    </div>
+
+    <div class="form-area">
+      <div class="ftabs">
+        <button class="ftab on" onclick="tab('personal',this)">Personal</button>
+        <button class="ftab" onclick="tab('education',this)">Education</button>
+        <button class="ftab" onclick="tab('experience',this)">Experience</button>
+        <button class="ftab" onclick="tab('skills',this)">Skills</button>
+      </div>
+
+      <!-- PERSONAL TAB -->
+      <div id="tp-personal">
+        <div class="fg photo-upload-wrapper">
+          <label class="fl">Profile Photo</label>
+          <label class="photo-upload">
+            <div class="photo-preview">
+              <img id="avatar-preview" src="" style="display:none;">
+              <svg id="avatar-icon" width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            </div>
+            <div class="photo-text">Click to upload <span>JPG or PNG format</span></div>
+            <input type="file" accept="image/*" style="display:none" onchange="uploadImage(event)">
+          </label>
+          <button id="del-avatar-btn" class="del-avatar-btn" onclick="removeImage(event)" style="display:none;" title="Remove Photo">&times;</button>
+        </div>
+        <div class="fg"><label class="fl">Full Name</label><input class="fi" id="fn" placeholder="Arafat Rahman" oninput="saveAndRender()"></div>
+        <div class="fg"><label class="fl">Title / Role</label><input class="fi" id="ft" placeholder="Software Engineer" oninput="saveAndRender()"></div>
+        <div class="two">
+          <div class="fg"><label class="fl">Email</label><input class="fi" id="fe" placeholder="arafat@email.com" oninput="saveAndRender()"></div>
+          <div class="fg"><label class="fl">Phone</label><input class="fi" id="fp" placeholder="+880 1700-000000" oninput="saveAndRender()"></div>
+        </div>
+        <div class="two">
+          <div class="fg"><label class="fl">Location</label><input class="fi" id="fc" placeholder="Dhaka, Bangladesh" oninput="saveAndRender()"></div>
+          <div class="fg"><label class="fl">Website/LinkedIn</label><input class="fi" id="fl2" placeholder="linkedin.com/in/arafat" oninput="saveAndRender()"></div>
+        </div>
+        <div class="fg"><label class="fl">Summary</label><textarea class="fi" id="fo" placeholder="A passionate software engineer with experience in developing scalable web applications..." oninput="saveAndRender()"></textarea></div>
+      </div>
+
+      <div id="tp-education" style="display:none"><div id="edu-list"></div><button class="add-btn" onclick="add('edu')">+ Add Education</button></div>
+      <div id="tp-experience" style="display:none"><div id="exp-list"></div><button class="add-btn" onclick="add('exp')">+ Add Experience</button></div>
+      <div id="tp-skills" style="display:none">
+        <div class="fg"><label class="fl">Skills (Comma separated)</label><textarea class="fi" id="fs" placeholder="JavaScript, React.js, Node.js, Python, Tailwind" oninput="saveAndRender()"></textarea></div>
+        <div id="aw-list"></div><button class="add-btn" onclick="add('aw')">+ Add Certificate</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER CANVAS -->
+  <main class="canvas-center" id="canvas-area">
+    <div class="canvas-header-tools">
+      <button class="fab-dl" id="dlbtn" onclick="dlPDF()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download PDF
+      </button>
+    </div>
+    
+    <!-- Overflow Warning Banner -->
+    <div id="overflow-warn">
+      ⚠️ Content exceeds 1 page (A4)
+      <span>Reduce text or experience. Overflow will be cut off in PDF.</span>
+    </div>
+
+    <!-- THIS IS THE LIVE PREVIEW -->
+    <div class="a4-wrap" id="cv-wrap">
+      <div id="cv-out"></div>
+    </div>
+  </main>
+
+  <!-- RIGHT SIDEBAR (DESIGN STUDIO) -->
+  <aside class="sidebar-right">
+    <div class="design-header"><h3 style="font-size:16px; font-weight:700; color:var(--text-dark);">Design Studio</h3></div>
+    
+    <div class="design-body">
+      <span class="section-title">Color Palette</span>
+      <div class="palettes" id="palettes"></div>
+
+      <span class="section-title">Select Template</span>
+      <div class="tpl-grid">
+        <div class="tcard sel" id="tc1" onclick="setTpl(1)">
+          <div class="tcard-thumb"><div class="mini-cv"><div style="background:#0f172a; height:30px;"></div><div style="display:flex; flex:1;"><div style="width:35%; border-right:1px solid #e2e8f0; background:#f8fafc;"></div><div></div></div></div></div>
+          <div class="tcard-info">Structured</div>
+        </div>
+        <div class="tcard" id="tc2" onclick="setTpl(2)">
+          <div class="tcard-thumb"><div class="mini-cv" style="padding:6px;"><div style="border-bottom:2px solid #0f172a; height:20px; margin-bottom:4px;"></div><div style="display:flex; flex:1;"><div style="flex:1;"></div><div style="width:30%;"></div></div></div></div>
+          <div class="tcard-info">Editorial</div>
+        </div>
+        <div class="tcard" id="tc3" onclick="setTpl(3)">
+          <div class="tcard-thumb"><div class="mini-cv" style="flex-direction:row;"><div style="width:40%; background:#0f172a;"></div><div style="flex:1;"></div></div></div>
+          <div class="tcard-info">Sidebar</div>
+        </div>
+        <div class="tcard" id="tc4" onclick="setTpl(4)">
+          <div class="tcard-thumb"><div class="mini-cv" style="padding:6px;"><div style="display:flex; gap:6px; margin-bottom:4px;"><div style="width:16px; height:16px; background:#e2e8f0;"></div><div style="flex:1; background:#f1f5f9;"></div></div><div style="display:flex; gap:4px; flex:1;"><div style="flex:1;"></div><div style="flex:1;"></div></div></div></div>
+          <div class="tcard-info">Modern Grid</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="f-logo"><em>Craft</em>CV</div>
+  <p style="font-size: 14px;">Next-generation private resume builder. No signups required.</p>
+  <p style="margin-top: 8px; font-size: 12px; opacity: 0.6;">&copy; 2026 CraftCV Studio. Built with passion.</p>
+</footer>
+
+<script>
+// ── THEME TOGGLER ──
+const currentTheme = localStorage.getItem('theme') || 'light';
+if (currentTheme === 'dark') document.body.setAttribute('data-theme', 'dark');
+
+function toggleTheme() {
+  const isDark = document.body.getAttribute('data-theme') === 'dark';
+  document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  
+  const icon = isDark 
+    ? `<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>` 
+    : `<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>`;
+  document.getElementById('theme-icon').innerHTML = icon;
+}
+if(currentTheme==='light') document.getElementById('theme-icon').innerHTML = `<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>`;
+
+// ── HERO 3D EFFECT ──
+document.addEventListener('mousemove', (e) => {
+  const card = document.getElementById('floatingCard');
+  if(!card || window.innerWidth <= 1024) return; 
+  const x = (window.innerWidth / 2 - e.pageX) / 35;
+  const y = (window.innerHeight / 2 - e.pageY) / 35;
+  card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+});
+
+// ── DATA INIT & SAFE PARSE ──
+let tpl = 1, palIdx = 0;
+let cvData = { fn:"", ft:"", fe:"", fp:"", fc:"", fl2:"", fo:"", fs:"", avatar:"", edu:[], exp:[], aw:[] };
+
+try {
+  const savedData = localStorage.getItem('craftcv_data');
+  if (savedData) cvData = JSON.parse(savedData);
+} catch(e) {
+  console.error("Local storage data corrupted. Initializing empty format.");
+}
+
+if(cvData.edu.length === 0) cvData.edu.push({degree:"", inst:"", year:"", result:""});
+if(cvData.exp.length === 0) cvData.exp.push({title:"", org:"", year:"", desc:""});
+if(cvData.aw.length === 0) cvData.aw.push({title:"", org:"", year:""});
+
+const PH = {
+  fn: 'Arafat Rahman', ft: 'Software Engineer',
+  fo: 'A passionate software engineer with experience in developing scalable web applications...',
+  edu: { degree: 'B.Sc in Computer Science', inst: 'Dhaka University', year: '2019 - 2023', result: '3.80 CGPA' },
+  exp: { title: 'Frontend Developer', org: 'Tech Innovators', year: '2023 - Present', desc: 'Developed scalable React applications and improved site performance.\nCollaborated closely with backend engineers.' },
+  aw: { title: 'Best Project Award', org: 'Tech Fest', year: '2023' }
+};
+
+// ── IMAGE COMPRESSION & UPLOAD ──
+function uploadImage(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    // Compress image to prevent LocalStorage Quota Error
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_SIZE = 400; // Perfect for avatar
+      let w = img.width, h = img.height;
+      if (w > h && w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; }
+      else if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      
+      cvData.avatar = canvas.toDataURL('image/jpeg', 0.85); // Compress quality
+      showAvatarPreview(); 
+      saveAndRender();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = ''; // FIX: Allow uploading the exact same file again after delete
+}
+
+function removeImage(e) {
+  e.preventDefault(); e.stopPropagation();
+  cvData.avatar = "";
+  showAvatarPreview(); saveAndRender();
+}
+
+function showAvatarPreview() {
+  const imgEl = document.getElementById('avatar-preview');
+  const iconEl = document.getElementById('avatar-icon');
+  const delBtn = document.getElementById('del-avatar-btn');
+  
+  if(cvData.avatar) {
+    imgEl.src = cvData.avatar;
+    imgEl.style.display = 'block';
+    iconEl.style.display = 'none';
+    delBtn.style.display = 'flex';
+  } else {
+    imgEl.src = "";
+    imgEl.style.display = 'none';
+    iconEl.style.display = 'block';
+    delBtn.style.display = 'none';
+  }
+}
+
+// ── PERFECT CENTER SCALING ──
+function fitCV() {
+  const container = document.getElementById('canvas-area');
+  const wrap = document.getElementById('cv-wrap');
+  if(!container || !wrap) return;
+  
+  wrap.style.transform = 'none';
+  wrap.style.margin = '0';
+
+  if (window.innerWidth <= 1024) {
+    const scale = Math.min((container.clientWidth - 40) / 794, 1);
+    wrap.style.transformOrigin = 'top center';
+    wrap.style.transform = `scale(${scale})`;
+    wrap.style.marginBottom = `-${1123 * (1 - scale)}px`;
+    wrap.style.marginTop = '20px';
+  } else {
+    const padY = 80; 
+    const scale = Math.min((container.clientWidth - 80) / 794, (container.clientHeight - padY) / 1123);
+    wrap.style.transformOrigin = 'top center';
+    wrap.style.transform = `scale(${scale})`;
+    
+    const scaledHeight = 1123 * scale;
+    const topSpace = (container.clientHeight - scaledHeight) / 2;
+    wrap.style.marginTop = `${Math.max(topSpace, 20)}px`;
+    wrap.style.marginBottom = `-${1123 - scaledHeight - topSpace}px`; 
+  }
+}
+window.addEventListener('resize', fitCV);
+
+// ── A4 OVERFLOW CHECKER ──
+function checkOverflow() {
+  const out = document.getElementById('cv-out');
+  const warn = document.getElementById('overflow-warn');
+  // Check if inner content is taller than A4 fixed height (1123px)
+  if(out.scrollHeight > out.clientHeight + 2) {
+    warn.style.display = 'flex';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+// ── PALETTES ──
+const PALETTES = {
+  1:[ {c1:'#0f172a',c2:'#3b82f6',c3:'#eff6ff'}, {c1:'#1e1b4b',c2:'#6366f1',c3:'#e0e7ff'}, {c1:'#064e3b',c2:'#10b981',c3:'#d1fae5'}, {c1:'#701a75',c2:'#d946ef',c3:'#fae8ff'} ],
+  2:[ {c1:'#0369a1',c2:'#38bdf8',c3:'#e0f2fe'}, {c1:'#1e1b4b',c2:'#6366f1',c3:'#e0e7ff'}, {c1:'#065f46',c2:'#10b981',c3:'#d1fae5'}, {c1:'#881337',c2:'#f43f5e',c3:'#ffe4e6'} ],
+  3:[ {c1:'#0f172a',c2:'#0ea5e9',c3:'#bae6fd'}, {c1:'#172554',c2:'#4f46e5',c3:'#c7d2fe'}, {c1:'#064e3b',c2:'#059669',c3:'#a7f3d0'}, {c1:'#4c0519',c2:'#e11d48',c3:'#fecdd3'} ],
+  4:[ {c1:'#0c4a6e',c2:'#0284c7',c3:'#f0f9ff'}, {c1:'#0f172a',c2:'#475569',c3:'#f1f5f9'}, {c1:'#022c22',c2:'#059669',c3:'#ecfdf5'}, {c1:'#4c0519',c2:'#e11d48',c3:'#fff1f2'} ]
+};
+
+function buildPaletteUI(){
+  const c = document.getElementById('palettes'); c.innerHTML = '';
+  PALETTES[tpl].forEach((p,i) => {
+    const d = document.createElement('div');
+    d.className = 'pal' + (i === palIdx ? ' active' : '');
+    d.style.background = p.c1; d.style.borderColor = p.c2;
+    d.onclick = () => { palIdx = i; buildPaletteUI(); applyPalette(); render(); };
+    c.appendChild(d);
+  });
+}
+function applyPalette(){
+  const p = PALETTES[tpl][palIdx];
+  const el = document.getElementById('cv-out');
+  if(el){ el.style.setProperty('--c1', p.c1); el.style.setProperty('--c2', p.c2); el.style.setProperty('--c3', p.c3); }
+}
+function setTpl(n){
+  tpl = n; palIdx = 0;
+  for(let i=1; i<=4; i++) document.getElementById('tc'+i).classList.toggle('sel', i===n);
+  buildPaletteUI(); render();
+}
+
+// ── UI TABS & CRUD ──
+function tab(name, btn){['personal','education','experience','skills'].forEach(t => document.getElementById('tp-'+t).style.display = t === name ? 'block' : 'none');
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('on')); btn.classList.add('on');
+}
+function add(type){
+  if(type==='edu') cvData.edu.push({degree:'', inst:'', year:'', result:''});
+  if(type==='exp') cvData.exp.push({title:'', org:'', year:'', desc:''});
+  if(type==='aw') cvData.aw.push({title:'', org:'', year:''});
+  updateFormUI(); saveAndRender();
+}
+function rm(type, i){ cvData[type].splice(i,1); updateFormUI(); saveAndRender(); }
+
+// ── SECURITY HELPERS ──
+function escapeHTML(str) { return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") : ""; }
+
+// ── FORM RENDER & SAVE ──
+function updateFormUI(){
+  document.getElementById('fn').value = cvData.fn || ""; 
+  document.getElementById('ft').value = cvData.ft || "";
+  document.getElementById('fe').value = cvData.fe || ""; 
+  document.getElementById('fp').value = cvData.fp || "";
+  document.getElementById('fc').value = cvData.fc || ""; 
+  document.getElementById('fl2').value = cvData.fl2 || "";
+  document.getElementById('fo').value = cvData.fo || ""; // Raw \n load
+  document.getElementById('fs').value = cvData.fs || "";
+
+  document.getElementById('edu-list').innerHTML = cvData.edu.map((e,i)=>`
+    <div class="ecard"><div class="ecard-head"><span class="ecard-label">Education ${i+1}</span><button class="rmv" onclick="rm('edu',${i})">×</button></div>
+      <div class="fg"><label class="fl">Degree</label><input class="fi" value="${escapeHTML(e.degree)}" placeholder="${PH.edu.degree}" oninput="cvData.edu[${i}].degree=this.value;saveAndRender()"></div>
+      <div class="fg"><label class="fl">Institution</label><input class="fi" value="${escapeHTML(e.inst)}" placeholder="${PH.edu.inst}" oninput="cvData.edu[${i}].inst=this.value;saveAndRender()"></div>
+      <div class="two"><div class="fg"><label class="fl">Year</label><input class="fi" value="${escapeHTML(e.year)}" placeholder="${PH.edu.year}" oninput="cvData.edu[${i}].year=this.value;saveAndRender()"></div>
+      <div class="fg"><label class="fl">Grade</label><input class="fi" value="${escapeHTML(e.result)}" placeholder="${PH.edu.result}" oninput="cvData.edu[${i}].result=this.value;saveAndRender()"></div></div></div>`).join('');
+    
+  document.getElementById('exp-list').innerHTML = cvData.exp.map((e,i)=>`
+    <div class="ecard"><div class="ecard-head"><span class="ecard-label">Experience ${i+1}</span><button class="rmv" onclick="rm('exp',${i})">×</button></div>
+      <div class="fg"><label class="fl">Job Title</label><input class="fi" value="${escapeHTML(e.title)}" placeholder="${PH.exp.title}" oninput="cvData.exp[${i}].title=this.value;saveAndRender()"></div>
+      <div class="fg"><label class="fl">Company</label><input class="fi" value="${escapeHTML(e.org)}" placeholder="${PH.exp.org}" oninput="cvData.exp[${i}].org=this.value;saveAndRender()"></div>
+      <div class="fg"><label class="fl">Duration</label><input class="fi" value="${escapeHTML(e.year)}" placeholder="${PH.exp.year}" oninput="cvData.exp[${i}].year=this.value;saveAndRender()"></div>
+      <div class="fg"><label class="fl">Description</label><textarea class="fi" placeholder="${PH.exp.desc}" oninput="cvData.exp[${i}].desc=this.value;saveAndRender()">${escapeHTML(e.desc)}</textarea></div></div>`).join('');
+
+  document.getElementById('aw-list').innerHTML = cvData.aw.map((a,i)=>`
+    <div class="ecard"><div class="ecard-head"><span class="ecard-label">Certificate ${i+1}</span><button class="rmv" onclick="rm('aw',${i})">×</button></div>
+      <div class="fg"><label class="fl">Title</label><input class="fi" value="${escapeHTML(a.title)}" placeholder="${PH.aw.title}" oninput="cvData.aw[${i}].title=this.value;saveAndRender()"></div>
+      <div class="two"><div class="fg"><label class="fl">Issuer</label><input class="fi" value="${escapeHTML(a.org)}" placeholder="${PH.aw.org}" oninput="cvData.aw[${i}].org=this.value;saveAndRender()"></div>
+      <div class="fg"><label class="fl">Year</label><input class="fi" value="${escapeHTML(a.year)}" placeholder="${PH.aw.year}" oninput="cvData.aw[${i}].year=this.value;saveAndRender()"></div></div></div>`).join('');
+}
+
+function saveAndRender(){
+  cvData.fn = document.getElementById('fn').value; 
+  cvData.ft = document.getElementById('ft').value;
+  cvData.fe = document.getElementById('fe').value; 
+  cvData.fp = document.getElementById('fp').value;
+  cvData.fc = document.getElementById('fc').value; 
+  cvData.fl2 = document.getElementById('fl2').value;
+  cvData.fo = document.getElementById('fo').value; // Save Raw \n
+  cvData.fs = document.getElementById('fs').value;
+  localStorage.setItem('craftcv_data', JSON.stringify(cvData));
+  render();
+}
+
+// ── SMART RENDER HELPERS (FIX 1: EMPTY FIELD LOGIC) ──
+function sanitize(str) { return str ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : ""; }
+function nl2br(str) { return str ? str.replace(/\n/g, '<br>') : ""; }
+
+function renderField(val, ph) {
+  return val ? sanitize(val) : `<span class="empty-ph">${ph}</span>`;
+}
+function renderArea(val, ph) {
+  return val ? nl2br(sanitize(val)) : `<span class="empty-ph">${nl2br(ph)}</span>`;
+}
+function renderTags(str, cls) {
+  if (!str) return `<span class="empty-ph" style="font-size:12.5px;">Add skills...</span>`;
+  return sanitize(str).split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="${cls}">${s}</span>`).join('');
+}
+
+// ── CV HTML GENERATION ──
+function render(){
+  const n = renderField(cvData.fn, PH.fn);
+  const r = renderField(cvData.ft, PH.ft);
+  const o = renderArea(cvData.fo, PH.fo);
+  
+  const rawContacts =[ 
+    cvData.fe ? `✉ ${sanitize(cvData.fe)}` : `<span class="empty-ph">✉ arafat@email.com</span>`,
+    cvData.fp ? `✆ ${sanitize(cvData.fp)}` : `<span class="empty-ph">✆ +880 1700-000000</span>`,
+    cvData.fc ? `📍 ${sanitize(cvData.fc)}` : `<span class="empty-ph">📍 Dhaka, Bangladesh</span>`,
+    cvData.fl2 ? `🔗 ${sanitize(cvData.fl2)}` : `<span class="empty-ph">🔗 linkedin.com/in/arafat</span>`
+  ];
+  
+  const imgStr = cvData.avatar ? `<img src="${cvData.avatar}" ` : '';
+
+  const eduHTML = cvData.edu.map(e => `
+    <div class="cv-irow">
+      <div style="flex:1;">
+        <div class="cv-ititle">${renderField(e.degree, PH.edu.degree)}</div>
+        <div class="cv-isub">${renderField(e.inst, PH.edu.inst)}</div>
+      </div>
+      <div class="cv-idate">${renderField(e.year, PH.edu.year)}</div>
+    </div>
+    ${e.result || (!e.degree && !e.inst) ? `<div class="cv-idesc">Grade: ${renderField(e.result, PH.edu.result)}</div>` : ''}
+  `).join('<div style="margin-bottom:20px;"></div>');
+
+  const expHTML = cvData.exp.map(e => `
+    <div class="cv-irow">
+      <div style="flex:1;">
+        <div class="cv-ititle">${renderField(e.title, PH.exp.title)}</div>
+        <div class="cv-isub">${renderField(e.org, PH.exp.org)}</div>
+      </div>
+      <div class="cv-idate">${renderField(e.year, PH.exp.year)}</div>
+    </div>
+    <div class="cv-idesc">${renderArea(e.desc, PH.exp.desc)}</div>
+  `).join('<div style="margin-bottom:24px;"></div>');
+
+  const awHTML = cvData.aw.map(a => `
+    <div class="cv-irow">
+      <div style="flex:1;">
+        <div class="cv-ititle">${renderField(a.title, PH.aw.title)}</div>
+        <div class="cv-isub">${renderField(a.org, PH.aw.org)}</div>
+      </div>
+      <div class="cv-idate">${renderField(a.year, PH.aw.year)}</div>
+    </div>
+  `).join('<div style="margin-bottom:16px;"></div>');
+
+  let html = '';
+  if(tpl === 1){
+    html = `<div class="t-root t1">
+      <div class="t1-hd">${imgStr ? imgStr+'class="t1-avatar">' : ''}<div style="text-align:left;"><div class="t1-name">${n}</div><div class="t1-role">${r}</div><div class="t1-contacts">${rawContacts.map(c=>`<span style="margin-right:10px;">${c}</span>`).join('')}</div></div></div>
+      <div class="t1-body">
+        <div class="t1-side"><div class="t1-sec"><div class="t1-stitle">Profile</div><div class="t1-obj">${o}</div></div><div class="t1-sec"><div class="t1-stitle">Skills</div><div style="display:flex;flex-wrap:wrap;">${renderTags(cvData.fs,'t1-tag')}</div></div>${cvData.aw.length>0 ? `<div class="t1-sec"><div class="t1-stitle">Awards</div>${awHTML}</div>` : ''}</div>
+        <div class="t1-main"><div class="t1-sec"><div class="t1-stitle">Experience</div>${expHTML}</div><div class="t1-sec"><div class="t1-stitle">Education</div>${eduHTML}</div></div>
+      </div>
+    </div>`;
+  }
+  else if(tpl === 2){
+    html = `<div class="t-root t2">
+      <div class="t2-head-wrap"><div style="display:flex; gap:25px; align-items:flex-end;">${imgStr ? imgStr+'class="t2-avatar">' : ''}<div><div class="t2-name">${n}</div><div class="t2-role">${r}</div></div></div><div class="t2-contacts">${rawContacts.map(c=>`<span>${c}</span>`).join('')}</div></div>
+      <div class="t2-body">
+        <div><div class="t1-sec"><div class="t2-stitle">Experience</div>${expHTML}</div><div class="t1-sec"><div class="t2-stitle">Education</div>${eduHTML}</div></div>
+        <div><div class="t1-sec"><div class="t2-stitle">Profile</div><div class="cv-idesc" style="margin-bottom:25px; font-size:13.5px;">${o}</div></div><div class="t1-sec"><div class="t2-stitle">Skills</div><div style="display:flex;flex-wrap:wrap;">${renderTags(cvData.fs,'t2-tag')}</div></div>${cvData.aw.length>0 ? `<div class="t1-sec" style="margin-top:30px;"><div class="t2-stitle">Awards</div>${awHTML}</div>` : ''}</div>
+      </div>
+    </div>`;
+  }
+  else if(tpl === 3){
+    html = `<div class="t-root t3">
+      <div class="t3-side">${imgStr ? imgStr+'class="t3-avatar">' : ''}<div class="t3-name">${n}</div><div class="t3-role">${r}</div><div class="t3-contacts">${rawContacts.map(c=>`<span>${c}</span>`).join('')}</div><div class="t3-stitle">Profile</div><div class="t1-obj" style="text-align:left; color:rgba(255,255,255,0.85); margin-bottom:30px">${o}</div><div class="t3-stitle">Skills</div><div style="text-align:left; display:flex;flex-wrap:wrap;">${renderTags(cvData.fs,'t3-tag')}</div></div>
+      <div class="t3-main"><div class="t1-sec"><div class="t3-mstitle">Experience</div>${expHTML}</div><div class="t1-sec"><div class="t3-mstitle">Education</div>${eduHTML}</div>${cvData.aw.length>0 ? `<div class="t1-sec"><div class="t3-mstitle">Awards</div>${awHTML}</div>` : ''}</div>
+    </div>`;
+  }
+  else if(tpl === 4){
+    html = `<div class="t-root t4">
+      <div class="t4-hd">${imgStr ? imgStr+'class="t4-avatar">' : ''}<div style="flex:1; display:flex; justify-content:space-between; align-items:center;"><div><div class="t4-name">${n}</div><div class="t4-role">${r}</div></div><div class="t4-contacts">${rawContacts.map(c=>`<span>${c}</span>`).join('')}</div></div></div>
+      <div class="t4-obj">${o}</div>
+      <div class="t4-body">
+        <div><div class="t1-sec"><div class="t4-stitle">Experience</div>${expHTML}</div></div>
+        <div><div class="t1-sec"><div class="t4-stitle">Education</div>${eduHTML}</div><div class="t1-sec"><div class="t4-stitle">Skills</div><div style="display:flex;flex-wrap:wrap;">${renderTags(cvData.fs,'t4-tag')}</div></div>${cvData.aw.length>0 ? `<div class="t1-sec" style="margin-top:30px;"><div class="t4-stitle">Awards</div>${awHTML}</div>` : ''}</div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('cv-out').innerHTML = html; 
+  applyPalette(); 
+  
+  // Check for overflow after dom paint
+  setTimeout(() => { fitCV(); checkOverflow(); }, 50);
+}
+
+// ── 100% BULLETPROOF PDF EXPORT (Cropping & Blank Fix) ──
+function dlPDF(){
+  const name = (document.getElementById('fn').value || 'Resume').replace(/\s+/g, '_');
+  const btn = document.getElementById('dlbtn'); 
+  btn.disabled = true; 
+  btn.innerHTML = 'Preparing PDF...';
+  
+  const wrap = document.getElementById('cv-wrap');
+  const out = document.getElementById('cv-out');
+  
+  // ১. বর্তমান স্কেলিং ও মার্জিন সেভ করে রাখা
+  const originalTransform = wrap.style.transform;
+  const originalMargin = wrap.style.margin;
+  const originalMarginTop = wrap.style.marginTop;
+  const originalMarginBottom = wrap.style.marginBottom;
+  const currentScrollY = window.scrollY; // ইউজারের স্ক্রল পজিশন সেভ
+  
+  // ২. লাইভ স্ক্রিনের স্কেলিং সরিয়ে অরজিনাল 1:1 সাইজ করা (যেন html2canvas ভুল মাপ না নেয়)
+  wrap.style.transform = 'none';
+  wrap.style.margin = '0';
+  out.classList.add('pdf-exporting'); // প্লেসহোল্ডার হাইড করবে
+  window.scrollTo(0, 0); // স্ক্রলিং ইস্যু রোধ করতে টপে নিয়ে যাওয়া
+
+  const opt = { 
+    margin: 0, 
+    filename: name + '.pdf', 
+    image: { type: 'jpeg', quality: 1.0 }, 
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      scrollX: 0, 
+      scrollY: 0
+    }, 
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+  };
+  
+  // ৩. PDF জেনারেট করা
+  html2pdf().set(opt).from(wrap).save().then(() => { 
+    // ৪. ডাউনলোড শুরু হলেই আবার আগের অবস্থায় (ছোট স্কেলে) ফিরিয়ে আনা
+    wrap.style.transform = originalTransform;
+    wrap.style.margin = originalMargin;
+    wrap.style.marginTop = originalMarginTop;
+    wrap.style.marginBottom = originalMarginBottom;
+    out.classList.remove('pdf-exporting');
+    window.scrollTo(0, currentScrollY);
+    
+    btn.disabled = false; 
+    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download PDF`; 
+  }).catch(err => { 
+    console.error("PDF Export Error:", err);
+    // এরর হলেও স্ক্রিন আগের অবস্থায় ফিরিয়ে আনা
+    wrap.style.transform = originalTransform;
+    wrap.style.margin = originalMargin;
+    wrap.style.marginTop = originalMarginTop;
+    wrap.style.marginBottom = originalMarginBottom;
+    out.classList.remove('pdf-exporting');
+    window.scrollTo(0, currentScrollY);
+    
+    btn.disabled = false; 
+    btn.innerHTML = 'Retry Download'; 
+  });
+}
+// ── INIT ──
+window.onload = () => { 
+  buildPaletteUI(); 
+  showAvatarPreview();
+  updateFormUI(); 
+  render(); 
+};
+</script>
+</body>
+</html>
