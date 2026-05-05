@@ -523,17 +523,30 @@ footer { background: var(--bg-panel); color: var(--text-muted); padding: 40px 5%
   <div class="f-logo"><em></em></div>
   <p style="font-size: 14px;">
   Created by, 
-  <a href="www.facebook.com/jobayer.hossan.7564" target="_blank" style="text-decoration: none;">
+  <a href="https://www.facebook.com/jobayer.hossan.7564" target="_blank" style="text-decoration: none;">
     <span style="
       background: linear-gradient(45deg, #00c6ff, #0072ff);
+      background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       font-weight: 600;
+      animation: gradientMove 3s linear infinite;
     ">
       Jobayer Hossan
     </span>
   </a>
 </p>
+
+<style>
+@keyframes gradientMove {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+</style>
   <p style="margin-top: 8px; font-size: 12px; opacity: 0.6;">&copy; 2026 askjobayer.com. Built with passion.</p>
 </footer>
 
